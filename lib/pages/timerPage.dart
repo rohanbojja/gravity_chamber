@@ -23,7 +23,7 @@ class _timerPageState extends State<timerPage> {
   }
 
   void custInit(){
-    dur = globalObjects.currentTask.workDur;
+    dur = globalObjects.setting.workDur;
     _startTimer();
   }
   void _startTimer(){
@@ -33,10 +33,12 @@ class _timerPageState extends State<timerPage> {
           //Send a notification / ALERT
           _timer.cancel(),
           _break = true,
+          globalObjects.logData(globalObjects.currentTask.name, globalObjects.setting.workDur.inSeconds,0),
           _startBreak(),
           FlutterBeep.playSysSound(41),
         }else if(dur.inSeconds == 0){
           FlutterBeep.beep(false),
+          globalObjects.logData(globalObjects.currentTask.name, globalObjects.setting.workDur.inSeconds,1),
           _timer.cancel(),
           Navigator.of(context).pop(false),
         },
@@ -54,7 +56,7 @@ class _timerPageState extends State<timerPage> {
           new OutlineButton(
             onPressed: () => {
               Navigator.of(context).pop(false),
-              dur = globalObjects.currentTask.breakDur,
+              dur = globalObjects.setting.breakDur,
               setState((){})
             },
             child: new Text('No'),
@@ -62,7 +64,7 @@ class _timerPageState extends State<timerPage> {
           new RaisedButton(
             onPressed: () => {
               Navigator.of(context).pop(true),
-              dur = globalObjects.currentTask.breakDur,
+              dur = globalObjects.setting.breakDur,
               _startTimer()
             },
             child: new Text('Yes'),

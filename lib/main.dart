@@ -1,14 +1,23 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
+import 'package:gravitychamber/pages/logPage.dart';
+import 'package:gravitychamber/pages/settingsPage.dart';
+import 'package:gravitychamber/pages/statsPage.dart';
 import 'package:gravitychamber/pages/timerPage.dart';
 import 'package:gravitychamber/services/global.dart';
 import 'package:package_info/package_info.dart';
+import 'package:sqflite/sqflite.dart';
 
 import 'models/Task.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(
+    Phoenix(
+      child: MyApp(),
+    )
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -29,7 +38,7 @@ class MyApp extends StatelessWidget {
         // or simply save your changes to "hot reload" in a Flutter IDE).
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
-        primarySwatch: Colors.lime,
+        primarySwatch: Colors.cyan,
         // This makes the visual density adapt to the platform that you run
         // the app on. For desktop platforms, the controls will be smaller and
         // closer together (more dense) than on mobile platforms.
@@ -60,7 +69,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<Task> taskList = List<Task>();
+  List<Task> taskList;
   //Textcontrollers
   TextEditingController _addLabelController = TextEditingController();
   TextEditingController _dur1C = TextEditingController();
@@ -69,74 +78,31 @@ class _MyHomePageState extends State<MyHomePage> {
   Color currentColor = Colors.cyanAccent;
   Duration dur1,dur2;
 
-  void changeColor(Color color) {
-    setState(() => pickerColor = color);
-  }
-  //START color picker
-  Future<void> showColorPicker() async {
-
-// raise the [showDialog] widget
-    await showDialog(
-      context: context,
-      child: AlertDialog(
-        title: const Text('Pick a color!'),
-        content: SingleChildScrollView(
-          child: MaterialPicker(
-            pickerColor: pickerColor,
-            onColorChanged: changeColor,
-//            showLabel: true,
-//            pickerAreaHeightPercent: 0.8,
-          ),
-        ),
-        actions: <Widget>[
-          FlatButton(
-            child: const Text('Got it'),
-            onPressed: () {
-              setState(() => currentColor = pickerColor);
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      ),
-    );
-    Navigator.pop(context);
-    _addLabel();
+  //START INIT
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    custInit();
   }
 
-  //END color picker
+  Future<void> custInit() async {
+    await globalObjects.initialiseDB();
+    taskList = await globalObjects.allTasks();
+  }
+  //END INIT
+
 
 
   Future<void> _addLabel() async {
     var newTask = await showDialog<Task>(context: context, builder: (BuildContext context){
       return SimpleDialog(
-        title: Wrap(
-          children: [InkWell(
-            onTap: showColorPicker,
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8),
-              child: Container(
-                height: 25,
-                width: 25,
-                color: pickerColor,
-              ),
-            ),
-          ),Text("New task")]
-        ),
+        title: Text("New task"),
         children: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 32),
             child: Wrap(
               children: [
-                TextField(
-                  controller: _dur1C,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(hintText: "Work duration, ex: 25"),
-                ),
-                TextField(
-                  controller: _dur2C,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(hintText: "Break duration, ex: 5"),
-                ),
                 TextField(
                   controller: _addLabelController,
                   decoration: InputDecoration(hintText: "Label, ex: College work"),
@@ -155,7 +121,8 @@ class _MyHomePageState extends State<MyHomePage> {
               RaisedButton(
                 child: Text("Add"),
                 onPressed: () => {
-                Navigator.pop(context, Task(name: _addLabelController.text, dur1: Duration(minutes: int.parse(_dur1C.text)),dur2: Duration(minutes: int.parse(_dur2C.text)), color: currentColor ))
+                  globalObjects.addTask(_addLabelController.text),
+                  Navigator.pop(context, Task(name: _addLabelController.text))
               },
               )
             ],
@@ -185,17 +152,24 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             UserAccountsDrawerHeader(),
             ListTile(
+              leading: Icon(Icons.account_balance_wallet),
+              title: Text("Log"),
+              onTap: ()=>{
+                Navigator.push(context, MaterialPageRoute(builder: (context) => logPage()))
+              },
+            ),
+            ListTile(
               leading: Icon(Icons.settings),
               title: Text("Settings"),
               onTap: ()=>{
-
+                Navigator.push(context, MaterialPageRoute(builder: (context) => settingsPage()))
               },
             ),
             ListTile(
               leading: Icon(Icons.multiline_chart),
               title: Text("Statistics"),
               onTap: ()=>{
-
+                Navigator.push(context, MaterialPageRoute(builder: (context) => statsPage()))
               },
             ),
             ListTile(
@@ -248,22 +222,21 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                   SafeArea(
-                    child: taskList.length==0? Padding(padding: EdgeInsets.symmetric(vertical: 32),child: Text("Add a task to get started!")) :  Padding(
+                    child: (taskList?.length==0 ?? true) ? Padding(padding: EdgeInsets.symmetric(vertical: 32),child: Text("Add a task to get started!")) :  Padding(
                       padding: EdgeInsets.symmetric(vertical: 32),
                       child: ListView.builder(
                         shrinkWrap: true,
-                        itemCount: taskList.length ?? 0,
+                        itemCount: taskList?.length ?? 0,
                         itemBuilder: (context,index){
                           return Card(
                             child: Dismissible(
                               child: ListTile(
-                                leading: Container(width:20, height: 20,color: taskList.elementAt(index).color),
-                                title: Text(taskList.elementAt(index).name),
+                                title: Text(taskList.elementAt(index).name, style: Theme.of(context).textTheme.bodyText1,),
                               ),
                               background: Container(color: Colors.green,),
                               secondaryBackground: Container(color: Colors.red,),
                               key: UniqueKey(),
-                              onDismissed: (direction) => {
+                              onDismissed: (direction) async => {
                                 if(direction==DismissDirection.startToEnd){
                                   globalObjects.currentTask = taskList.elementAt(index),
                                   Navigator.push(context, MaterialPageRoute(builder: (context) => new timerPage())),
@@ -271,7 +244,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                   taskList.removeAt(index),
                                   setState((){})
                                 }else{
-
+                                  await globalObjects.removeTask(taskList.elementAt(index).name),
+                                  taskList.removeAt(index),
                                 }
                               },
                             ),
