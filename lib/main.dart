@@ -1,18 +1,22 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
+import 'package:get_it/get_it.dart';
+import 'package:gravitychamber/components/TaskList.dart';
 import 'package:gravitychamber/pages/logPage.dart';
 import 'package:gravitychamber/pages/settingsPage.dart';
 import 'package:gravitychamber/pages/statsPage.dart';
 import 'package:gravitychamber/pages/timerPage.dart';
-import 'package:gravitychamber/services/global.dart';
-import 'package:package_info/package_info.dart';
-import 'package:sqflite/sqflite.dart';
+
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import 'models/Task.dart';
 
+GetIt getIt = new GetIt.asNewInstance();
 void main() {
+  getIt.registerSingleton<TaskList>(TaskList());
   runApp(
     Phoenix(
       child: MyApp(),
@@ -69,7 +73,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<Task> taskList;
+  final taskList = getIt.get<TaskList>();
   //Textcontrollers
   TextEditingController _addLabelController = TextEditingController();
   TextEditingController _dur1C = TextEditingController();
@@ -87,14 +91,19 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> custInit() async {
-    await globalObjects.initialiseDB();
-    taskList = await globalObjects.allTasks();
+    //await globalObjects.initialiseDB();
+    await Hive.initFlutter();
+    var box = await Hive.openBox('tasks');
+    var tmp = box.get("tasks") as List<dynamic>;
+    taskList.current = tmp;
+//    taskList = await globalObjects.allTasks();
+
   }
   //END INIT
 
 
 
-  Future<void> _addLabel() async {
+  Future<void> _addTask() async {
     var newTask = await showDialog<Task>(context: context, builder: (BuildContext context){
       return SimpleDialog(
         title: Text("New task"),
@@ -121,7 +130,7 @@ class _MyHomePageState extends State<MyHomePage> {
               RaisedButton(
                 child: Text("Add"),
                 onPressed: () => {
-                  globalObjects.addTask(_addLabelController.text),
+                  //globalObjects.addTask(_addLabelController.text),
                   Navigator.pop(context, Task(name: _addLabelController.text))
               },
               )
@@ -130,11 +139,9 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       );
     });
-    setState(() {
-      if(newTask!=null){
-        taskList.add(newTask);
-      }
-    });
+    if(newTask!=null){
+      taskList.add(newTask.name);
+    }
   }
 
   @override
@@ -222,39 +229,48 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                   SafeArea(
-                    child: (taskList?.length==0 ?? true) ? Padding(padding: EdgeInsets.symmetric(vertical: 32),child: Text("Add a task to get started!")) :  Padding(
+                    child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 32),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: taskList?.length ?? 0,
-                        itemBuilder: (context,index){
-                          return Card(
-                            child: Dismissible(
-                              child: ListTile(
-                                title: Text(taskList.elementAt(index).name, style: Theme.of(context).textTheme.bodyText1,),
-                              ),
-                              background: Container(color: Colors.green,),
-                              secondaryBackground: Container(color: Colors.red,),
-                              key: UniqueKey(),
-                              onDismissed: (direction) async => {
-                                if(direction==DismissDirection.startToEnd){
-                                  globalObjects.currentTask = taskList.elementAt(index),
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => new timerPage())),
-                                  taskList.add(taskList.elementAt(index)),
-                                  taskList.removeAt(index),
-                                  setState((){})
-                                }else{
-                                  await globalObjects.removeTask(taskList.elementAt(index).name),
-                                  taskList.removeAt(index),
-                                }
-                              },
-                            ),
-                          );
-                        },
+                      child: StreamBuilder(
+                          stream: taskList.stream$,
+                          builder: (BuildContext context, AsyncSnapshot snap){
+                            print("FUCK ${snap.data}");
+                            var obj = snap.data;
+                            if(obj!=null && obj.length>0){
+                              return ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: obj.length ?? 0,
+                                itemBuilder: (context,index){
+                                  return Card(
+                                    child: Dismissible(
+                                      child: ListTile(
+                                        title: Text(obj.elementAt(index), style: Theme.of(context).textTheme.bodyText1,),
+                                      ),
+                                      background: Container(color: Colors.green,),
+                                      secondaryBackground: Container(color: Colors.red,),
+                                      key: UniqueKey(),
+                                      onDismissed: (direction) async => {
+                                        if(direction==DismissDirection.startToEnd){
+                                          taskList.currentTask = taskList.current.elementAt(index),
+                                          Navigator.push(context, MaterialPageRoute(builder: (context) => new timerPage())),
+                                          taskList.add(taskList.current.elementAt(index)),
+                                          //taskList.current.removeAt(index),
+                                          setState((){})
+                                        }else{
+                                          taskList.remove(taskList.current.elementAt(index)),
+                                        }
+                                      },
+                                    ),
+                                  );
+                                },
+                              );
+                            }else{
+                              return Padding(padding: EdgeInsets.symmetric(vertical: 32),child: Text("Add a task to get started!"));
+                            }
+                          }
                       ),
                     ),
-                  )
-                  ,
+                  ),
                 ],
               ),
             )
@@ -262,7 +278,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _addLabel,
+        onPressed: _addTask,
         tooltip: 'Add a label',
         child: Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.

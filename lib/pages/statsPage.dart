@@ -111,7 +111,7 @@ class _statsPageState extends State<statsPage> {
   }
 
   Future<void> custInit() async {
-    statList = await globalObjects.allStats();
+//    statList = await globalObjects.allStats(); TODO
 
     //Fix stat list (Create aggregate for tasks)
     seriesList = _createData();
@@ -123,7 +123,7 @@ class _statsPageState extends State<statsPage> {
   }
 
   Future<bool> reInit() async{
-    statList = await globalObjects.allStats();
+//    statList = await globalObjects.allStats(); TODO
     var tempList = List<Map<String,dynamic>>();
     statList.forEach((element) {
       var entryDate = DateTime.fromMillisecondsSinceEpoch(element["milsinceepoch"]);

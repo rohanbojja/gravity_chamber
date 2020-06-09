@@ -21,7 +21,7 @@ class _logPageState extends State<logPage> {
   }
 
   Future<void> custInit() async {
-    statList = await globalObjects.allStats();
+//    statList = await globalObjects.allStats(); TODO
     setState(() {
 
     });
@@ -54,7 +54,7 @@ class _logPageState extends State<logPage> {
             child: RaisedButton(
               onPressed: (){
                 var fakeLabels = ["Gaming", "Coding", "Music", "Gym"];
-                globalObjects.logData(fakeLabels[Random().nextInt(4)], Random().nextInt(60),Random().nextInt(2));
+//                globalObjects.logData(fakeLabels[Random().nextInt(4)], Random().nextInt(60),Random().nextInt(2)); TODO
                 cc+=1;
                 setState(() {
 

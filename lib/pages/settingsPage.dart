@@ -55,7 +55,7 @@ class _settingsPageState extends State<settingsPage> {
                 title: Text("RESET DATA"),
                 subtitle: Text("ALL DATA WILL BE LOST!"),
                 onTap: () async {
-                  await globalObjects.resetDB();
+//                  await globalObjects.resetDB(); TODO
                   Phoenix.rebirth(context);
                 },
               )
