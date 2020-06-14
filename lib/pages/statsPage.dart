@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:gravitychamber/models/Task.dart';
 import 'package:gravitychamber/services/global.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:hive/hive.dart';
 
 class statsPage extends StatefulWidget {
   @override
   _statsPageState createState() => _statsPageState();
 }
 
-class Activity{
+class Activity {
   String name;
   Duration duration;
   DateTime timeStamp;
-  Activity(String name, int duration, {int mse}){
+  Activity(String name, int duration, {int mse}) {
     this.name = name;
     this.duration = Duration(seconds: duration);
     this.timeStamp = DateTime.fromMillisecondsSinceEpoch(mse);
@@ -20,23 +21,24 @@ class Activity{
 }
 
 class _statsPageState extends State<statsPage> {
-  List<Map<String, dynamic>> statList;
-  var seriesList = List<charts.Series<Activity,String>>();
-  var seriesListDate = List<charts.Series<Activity,String>>();
-  int cc=0;
+  var box = Hive.box("log");
+  var statList;
+  var seriesList = List<charts.Series<Activity, String>>();
+  var seriesListDate = List<charts.Series<Activity, String>>();
+  int cc = 0;
   bool todayOnly = false;
 
   List<charts.Series<Activity, String>> _createData() {
     var data = List<Activity>();
-    var tempMap ={};
-    statList.forEach((element) {
-      if(tempMap.containsKey(element["name"])){
+    var tempMap = {};
+    statList.forEach((key, element) {
+      if (tempMap.containsKey(element["name"])) {
         tempMap[element["name"]] += element["duration"];
-      }else{
+      } else {
         tempMap[element["name"]] = element["duration"];
       }
     });
-
+//
     tempMap.forEach((key, value) {
       data.add(Activity(key, value, mse: 0));
     });
@@ -55,19 +57,19 @@ class _statsPageState extends State<statsPage> {
   List<charts.Series<Activity, String>> _createDataDate() {
     var data = List<Activity>();
     var data2 = List<Activity>();
-    var tempMap ={};
-    var tempMap2 ={};
-    statList.forEach((element) {
-      if(element["work"]==0){
-        if(tempMap.containsKey(element["name"])){
+    var tempMap = {};
+    var tempMap2 = {};
+    statList.forEach((key, element) {
+      if (element["break"] == 1) {
+        if (tempMap.containsKey(element["name"])) {
           tempMap[element["name"]] += element["duration"];
-        }else{
+        } else {
           tempMap[element["name"]] = element["duration"];
         }
-      }else{
-        if(tempMap2.containsKey(element["name"])){
+      } else {
+        if (tempMap2.containsKey(element["name"])) {
           tempMap2[element["name"]] += element["duration"];
-        }else{
+        } else {
           tempMap2[element["name"]] = element["duration"];
         }
       }
@@ -112,36 +114,39 @@ class _statsPageState extends State<statsPage> {
 
   Future<void> custInit() async {
 //    statList = await globalObjects.allStats(); TODO
-
+    statList = box.toMap();
+    print("STATLIST: $statList");
     //Fix stat list (Create aggregate for tasks)
     seriesList = _createData();
     seriesListDate = _createDataDate();
     print("${seriesList.length}");
-    setState(() {
-
-    });
+    setState(() {});
   }
 
-  Future<bool> reInit() async{
+  Future<bool> reInit() async {
 //    statList = await globalObjects.allStats(); TODO
-    var tempList = List<Map<String,dynamic>>();
-    statList.forEach((element) {
-      var entryDate = DateTime.fromMillisecondsSinceEpoch(element["milsinceepoch"]);
+    statList = await box.toMap();
+    var tempList = Map();
+    statList.forEach((key, element) {
+      var temp = element;
+      print("KEY: $key");
+      temp["ts"] = DateTime.fromMillisecondsSinceEpoch(int.parse(key));
+      var entryDate = temp["ts"];
       var todayDate = DateTime.now();
-      if(entryDate.year == todayDate.year && entryDate.month == todayDate.month && entryDate.day == todayDate.day){
-        tempList.add(element);
+      if (entryDate.year == todayDate.year &&
+          entryDate.month == todayDate.month &&
+          entryDate.day == todayDate.day) {
+        tempList[key] = element;
       }
     });
-    if(todayOnly){
+    if (todayOnly) {
       statList = tempList;
     }
     print("CURRENT: ${statList.length}");
     //Fix stat list (Create aggregate for tasks)
     seriesList = _createData();
     seriesListDate = _createDataDate();
-    setState(() {
-
-    });
+    setState(() {});
   }
 
   @override
@@ -153,22 +158,26 @@ class _statsPageState extends State<statsPage> {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(children: [
-            RaisedButton(child: Text("Toggle"), onPressed: (){
-              todayOnly = !todayOnly;
-              reInit();
-              setState(() {
-
-              });
-            },),
-            Text("${todayOnly ? "Only today's data" :"Stats since epoch"}"),
+            RaisedButton(
+              child: Text("Toggle"),
+              onPressed: () {
+                todayOnly = !todayOnly;
+                reInit();
+                setState(() {});
+              },
+            ),
+            Text("${todayOnly ? "Only today's data" : "Stats since epoch"}"),
             Container(
               height: 300,
-              child: charts.PieChart(seriesList,
-                  animate: true,
-                  defaultRenderer: new charts.ArcRendererConfig(arcRendererDecorators: [
-                    new charts.ArcLabelDecorator(
-                        labelPosition: charts.ArcLabelPosition.inside)
-                  ]),),
+              child: charts.PieChart(
+                seriesList,
+                animate: true,
+                defaultRenderer: new charts.ArcRendererConfig(
+                    arcRendererDecorators: [
+                      new charts.ArcLabelDecorator(
+                          labelPosition: charts.ArcLabelPosition.inside)
+                    ]),
+              ),
             ),
             Container(
               height: 200,
@@ -179,7 +188,7 @@ class _statsPageState extends State<statsPage> {
                 vertical: false,
                 customSeriesRenderers: [
                   new charts.PointRendererConfig(
-                    // ID used to link series to this renderer.
+                      // ID used to link series to this renderer.
                       customRendererId: 'customPoint')
                 ],
               ),

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
+import 'package:gravitychamber/components/TaskList.dart';
+import 'package:gravitychamber/main.dart';
 import 'package:gravitychamber/services/global.dart';
 import 'package:gravitychamber/widgets/duration_picker.dart';
+import 'package:persist_theme/ui/switches/dark_mode.dart';
 
 class settingsPage extends StatefulWidget {
   @override
@@ -52,13 +55,17 @@ class _settingsPageState extends State<settingsPage> {
                 },
               ),
               ListTile(
-                title: Text("RESET DATA"),
+                title: Text("RESET DATA[WIP]"),
                 subtitle: Text("ALL DATA WILL BE LOST!"),
                 onTap: () async {
-//                  await globalObjects.resetDB(); TODO
-                  Phoenix.rebirth(context);
+                  final _taskList = getIt<TaskList>();
+                  await _taskList.deleteDB();
+                  setState(() {
+
+                  });
                 },
-              )
+              ),
+              DarkModeSwitch(),
             ],
           ),
         ),

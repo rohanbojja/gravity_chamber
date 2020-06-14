@@ -1,38 +1,80 @@
 import 'package:gravitychamber/models/Task.dart';
 import 'package:hive/hive.dart';
 import 'package:rxdart/subjects.dart';
+import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class TaskList{
-  BehaviorSubject _TaskList = BehaviorSubject.seeded([]);
-  BehaviorSubject _CurrentTask = BehaviorSubject.seeded(Task());
-  Stream get stream$ => _TaskList.stream;
-  List get current => _TaskList.value;
-  set current(List t) => {
-    _TaskList.value = t ?? []
-  };
-  String get currentTask => _CurrentTask.value;
-  set currentTask(String t) => _CurrentTask.value = t;
+  BehaviorSubject _taskMap = BehaviorSubject.seeded({});
+  BehaviorSubject _CurrentTask = BehaviorSubject.seeded("");
+  load()
+  {
+    var box = Hive.box("tasks");
+    box.toMap()["tasks"].forEach((v) {
+      String name;
+      Color color;
+      Duration goal;
+      _taskMap.value["${v["name"]}"] = Task(name: v["name"],color: Color((v["color"])), goal: Duration(seconds: v["goal"]) );
+    });
+    print ("HIVE LOAD: ${box.toMap()}");
+    _taskMap.add(taskMap);
+  }
+  Stream get stream$ => _taskMap.stream; //Pass to streambuilders
+  Map get taskMap =>_taskMap.value;
+  String get currentTask => _CurrentTask.value; //Current task
+  set currentTask(String t) => _CurrentTask.value = t; //Set current task
+
+
+  //Custom adapter
+  makeList(){
+    var l =[];
+    taskMap.forEach((k,v){
+      l.add({
+        "name" : k,
+        "color": v.color.value,
+        "goal": v.goal.inSeconds
+      });
+    });
+    return l;
+  }
 
   void updateHive(){
     var box = Hive.box("tasks");
-    box.put("tasks", current);
+    box.put("tasks", makeList());
+    print ("CURRENT: $_taskMap");
+    print ("HIVE: ${box.toMap()}");
+  }
+
+  Future<void> deleteDB() async {
+    await Hive.box("tasks").clear();
   }
 
   remove(String t){
-    if(current.contains(t)) {
-      current.remove(t);
-      _TaskList.add(current);
+    if(_taskMap.value.containsKey(t)) {
+      print("BF: ${_taskMap.value}");
+      taskMap.remove(t);
+      print("AF: ${_taskMap.value}");
+      _taskMap.add(taskMap);
       updateHive();
     }
   }
-  add(String t){
-    if(!current.contains(t)) {
-      current.add(t);
-      _TaskList.add(current);
+  add(Task t){
+    //Add the name to a list and send an update event through the stream
+    print("Task received ${t.name}");
+    if(!taskMap.containsKey(t.name)){
+      taskMap[t.name] = t;
+      _taskMap.add(taskMap);
+      print("Task exists ${_taskMap.value.containsKey(t.name)}");
       updateHive();
     }
   }
 
-
+  startTask(String t){
+    currentTask = t;
+    //Hack to make list view work with dismissible
+    var tempTask  = taskMap[t];
+    taskMap.remove(t);
+    taskMap[t] = tempTask;
+    _taskMap.add(taskMap);
+  }
 }

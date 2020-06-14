@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:gravitychamber/services/global.dart';
+import 'package:hive/hive.dart';
 
 class logPage extends StatefulWidget {
   @override
@@ -11,7 +12,9 @@ class logPage extends StatefulWidget {
 
 
 class _logPageState extends State<logPage> {
-  List<Map<String, dynamic>> statList;
+  var box = Hive.box("log");
+  List statList = List();
+  var statList2;
   int cc=0;
   @override
   void initState() {
@@ -22,6 +25,13 @@ class _logPageState extends State<logPage> {
 
   Future<void> custInit() async {
 //    statList = await globalObjects.allStats(); TODO
+    statList2 = box.toMap();
+    statList2.forEach((key,element){
+      var temp = element;
+      print("KEY: $key");
+      temp["ts"] = DateTime.fromMillisecondsSinceEpoch(int.parse(key));
+      statList.add(temp);
+    });
     setState(() {
 
     });
@@ -41,28 +51,14 @@ class _logPageState extends State<logPage> {
                 child: ListView.builder(
                   itemCount: (statList?.length ?? 0),
                   itemBuilder: (context, index) {
-                    var TS = DateTime.fromMillisecondsSinceEpoch(statList.elementAt(index)["milsinceepoch"]);
+                    var TS = statList.elementAt(index)["ts"];
                     return ListTile(
                       title: Text("${statList.elementAt(index)["name"]}"),
-                      subtitle: Text("${TS.toString()} ${statList.elementAt(index)["duration"]} ${statList.elementAt(index)["work"]}"),
+                      subtitle: Text("${TS.toString()} ${statList.elementAt(index)["duration"]} ${statList.elementAt(index)["break"]}"),
                     );
                   },
                 )),
           ),
-          Flexible(
-            flex: 1,
-            child: RaisedButton(
-              onPressed: (){
-                var fakeLabels = ["Gaming", "Coding", "Music", "Gym"];
-//                globalObjects.logData(fakeLabels[Random().nextInt(4)], Random().nextInt(60),Random().nextInt(2)); TODO
-                cc+=1;
-                setState(() {
-
-                });
-              },
-              child: Text("FAKE DATA GEN"),
-            ),
-          )
         ]),
       ),
     );
