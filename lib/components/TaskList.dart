@@ -12,7 +12,7 @@ class TaskList{
   load()
   {
     var box = Hive.box("tasks");
-    box.toMap()["tasks"].forEach((v) {
+    box?.toMap()["tasks"]?.forEach((v) {
       String name;
       Color color;
       Duration goal;
