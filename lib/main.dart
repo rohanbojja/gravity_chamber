@@ -266,68 +266,52 @@ class _MyHomePageState extends State<MyHomePage> {
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, a
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Flexible(
-              flex: 8,
-              child: Column(
-                children: [
-                  SafeArea(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 32),
-                      child: StreamBuilder(
-                          stream: taskList.stream$,
-                          builder: (BuildContext context, AsyncSnapshot snap) {
-                            print("STREAM ${snap.data}");
-                            var obj = snap.data as Map;
-                            if (obj != null && obj.length > 0) {
-                              var tmp = [];
-                              obj.forEach((key, value) {
-                                tmp.add(key);
-                              });
-                              print("AS LIST $tmp");
-                              return ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: obj.length ?? 0,
-                                itemBuilder: (context, index) {
-                                  var curTask = obj[tmp[index]] as Task;
-                                  var uq = UniqueKey();
-                                  print("${curTask.name} $uq");
-                                  return AnimatedCard(
-                                    curTask: curTask,
-                                    cb1: () =>
-                                        {
-                                          Navigator.push(
-                                              context, MaterialPageRoute(builder: (context) => new timerPage())),
-                                          taskList.startTask(curTask.name)
-                                        },
-                                    cb2: () =>{
-                                      taskList.remove(curTask.name),
-                                    },
-                                    cb3: () => {
-                                      Navigator.push(
-                                          context, MaterialPageRoute(builder: (context) => new TaskPage(curTask))),
-                                    },
-                                    uq: uq,
-                                  );
-                                },
-                              );
-                            } else {
-                              return Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 32),
-                                  child: Text("Add a task to get started!"));
-                            }
-                          }),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          ],
-        ),
-      ),
+      body: StreamBuilder(
+          stream: taskList.stream$,
+          builder: (BuildContext context, AsyncSnapshot snap) {
+            print("STREAM ${snap.data}");
+            var obj = snap.data as Map;
+            if (obj != null && obj.length > 0) {
+              var tmp = [];
+              obj.forEach((key, value) {
+                tmp.add(key);
+              });
+              print("AS LIST $tmp");
+              return SingleChildScrollView(
+                child: ListView.builder(
+                  physics: ClampingScrollPhysics(),
+                  shrinkWrap: true,
+                  itemCount: obj.length ?? 0,
+                  itemBuilder: (context, index) {
+                    var curTask = obj[tmp[index]] as Task;
+                    var uq = UniqueKey();
+                    print("${curTask.name} $uq");
+                    return AnimatedCard(
+                      curTask: curTask,
+                      cb1: () =>
+                      {
+                        Navigator.push(
+                            context, MaterialPageRoute(builder: (context) => new timerPage())),
+                        taskList.startTask(curTask.name)
+                      },
+                      cb2: () =>{
+                        taskList.remove(curTask.name),
+                      },
+                      cb3: () => {
+                        Navigator.push(
+                            context, MaterialPageRoute(builder: (context) => new TaskPage(curTask))),
+                      },
+                      uq: uq,
+                    );
+                  },
+                ),
+              );
+            } else {
+              return Padding(
+                  padding: EdgeInsets.symmetric(vertical: 32),
+                  child: Text("Add a task to get started!"));
+            }
+          }),
       floatingActionButton: FloatingActionButton(
         onPressed: _addTask,
         tooltip: 'Add a label',
