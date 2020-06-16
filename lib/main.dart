@@ -307,9 +307,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               );
             } else {
-              return Padding(
-                  padding: EdgeInsets.symmetric(vertical: 32),
-                  child: Text("Add a task to get started!"));
+              return Center(
+                child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 32),
+                    child: Text("Add a task to get started!")),
+              );
             }
           }),
       floatingActionButton: FloatingActionButton(
