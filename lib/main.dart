@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gravitychamber/components/AnimatedCard.dart';
@@ -16,7 +15,6 @@ import 'package:persist_theme/ui/switches/dark_mode.dart';
 import 'package:persist_theme/persist_theme.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-
 import 'models/Task.dart';
 
 var myTheme = ThemeData(
@@ -220,9 +218,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 showAboutDialog(
                   applicationIcon: Icon(Icons.done_outline),
                   context: context,
-                  children: [
-                    Text("Yet Another Time Management Application.")
-                  ],
+                  children: [Text("Yet Another Time Management Application.")],
                   applicationVersion: "1.0.0ALPHA",
                 ),
               },
@@ -288,18 +284,21 @@ class _MyHomePageState extends State<MyHomePage> {
                     print("${curTask.name} $uq");
                     return AnimatedCard(
                       curTask: curTask,
-                      cb1: () =>
-                      {
+                      cb1: () => {
                         Navigator.push(
-                            context, MaterialPageRoute(builder: (context) => new timerPage())),
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => new timerPage())),
                         taskList.startTask(curTask.name)
                       },
-                      cb2: () =>{
+                      cb2: () => {
                         taskList.remove(curTask.name),
                       },
                       cb3: () => {
                         Navigator.push(
-                            context, MaterialPageRoute(builder: (context) => new TaskPage(curTask))),
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => new TaskPage(curTask))),
                       },
                       uq: uq,
                     );

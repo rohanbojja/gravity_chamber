@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
-import 'package:gravitychamber/models/Task.dart';
-import 'package:gravitychamber/services/global.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:hive/hive.dart';
 

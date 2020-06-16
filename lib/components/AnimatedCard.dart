@@ -4,7 +4,6 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:gravitychamber/components/TaskList.dart';
 import 'package:gravitychamber/main.dart';
 import 'package:gravitychamber/models/Task.dart';
-import 'package:gravitychamber/pages/timerPage.dart';
 
 class AnimatedCard extends StatefulWidget {
   final Task curTask;
