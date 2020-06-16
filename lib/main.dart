@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gravitychamber/components/AnimatedCard.dart';
+import 'package:gravitychamber/pages/taskPage.dart';
 import 'package:provider/provider.dart';
 import 'package:get_it/get_it.dart';
 import 'package:gravitychamber/components/TaskList.dart';
@@ -219,6 +220,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 showAboutDialog(
                   applicationIcon: Icon(Icons.done_outline),
                   context: context,
+                  children: [
+                    Text("Yet Another Time Management Application.")
+                  ],
                   applicationVersion: "1.0.0ALPHA",
                 ),
               },
@@ -302,7 +306,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                     cb2: () =>{
                                       taskList.remove(curTask.name),
                                     },
-                                    cb3: null,
+                                    cb3: () => {
+                                      Navigator.push(
+                                          context, MaterialPageRoute(builder: (context) => new TaskPage(curTask))),
+                                    },
                                     uq: uq,
                                   );
                                 },

@@ -7,6 +7,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 class TaskList{
   BehaviorSubject _taskMap = BehaviorSubject.seeded({});
   BehaviorSubject _CurrentTask = BehaviorSubject.seeded("");
+
+
   load()
   {
     var box = Hive.box("tasks");
@@ -43,6 +45,7 @@ class TaskList{
     box.put("tasks", makeList());
     print ("CURRENT: $_taskMap");
     print ("HIVE: ${box.toMap()}");
+    _taskMap.add(taskMap);
   }
 
   Future<void> deleteDB() async {
@@ -65,6 +68,17 @@ class TaskList{
       taskMap[t.name] = t;
       _taskMap.add(taskMap);
       print("Task exists ${_taskMap.value.containsKey(t.name)}");
+      updateHive();
+    }
+  }
+
+  update(Task t){
+    //Add the name to a list and send an update event through the stream
+    print("Task received for update ${t.name}");
+    if(taskMap.containsKey(t.name)){
+      taskMap[t.name] = t;
+      _taskMap.add(taskMap);
+      print("Task update ${_taskMap.value.containsKey(t.name)}");
       updateHive();
     }
   }

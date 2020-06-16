@@ -1,5 +1,8 @@
 import 'package:expansion_tile_card/expansion_tile_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:gravitychamber/components/TaskList.dart';
+import 'package:gravitychamber/main.dart';
 import 'package:gravitychamber/models/Task.dart';
 import 'package:gravitychamber/pages/timerPage.dart';
 
@@ -17,6 +20,8 @@ class AnimatedCard extends StatefulWidget {
 
 class _AnimatedCardState extends State<AnimatedCard> with TickerProviderStateMixin {
   bool isSelected = false;
+  Color pickerColor = Color(0xff443a49);
+  Color currentColor = Color(0xff443a49);
   Animation _animation;
   var _height=64.0;
   var _x=16.0;
@@ -24,10 +29,21 @@ class _AnimatedCardState extends State<AnimatedCard> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
+    print("Init state!  ");
+    currentColor = widget.curTask.color;
+  }
+  void upd(){
+    print("${widget.curTask.color.toString()}");
+    setState(() {
 
+    });
+  }
+  void changeColor(Color color) {
+    setState(() => pickerColor = color);
   }
   @override
   Widget build(BuildContext context) {
+    currentColor = widget.curTask.color;
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 4, horizontal: 4),
       child: GestureDetector(
@@ -44,7 +60,7 @@ class _AnimatedCardState extends State<AnimatedCard> with TickerProviderStateMix
           child: ExpansionTileCard(
             borderRadius: BorderRadius.circular(5),
             baseColor: widget.curTask.color,
-            expandedColor: widget.curTask.color.withAlpha(255),
+            expandedColor: currentColor.withAlpha(255),
             title: Text(widget.curTask.name, style: TextStyle(color: Colors.white),),
             children: [
               Divider(),
@@ -57,13 +73,39 @@ class _AnimatedCardState extends State<AnimatedCard> with TickerProviderStateMix
                   IconButton(
                     icon: Icon(Icons.color_lens),
                     onPressed: (){
-                      print("Change color");
+                      showDialog(
+                        context: context,
+                        child: AlertDialog(
+                          title: const Text('Pick a color!'),
+                          content: SingleChildScrollView(
+                             child: BlockPicker(
+                               pickerColor: currentColor,
+                               onColorChanged: changeColor,
+                             ),
+                          ),
+                          actions: <Widget>[
+                            FlatButton(
+                              child: const Text('Got it'),
+                              onPressed: () {
+                                print("Updated!");
+                                var tsk = getIt<TaskList>();
+                                currentColor = pickerColor;
+                                widget.curTask.color = currentColor;
+                                tsk.updateHive();
+                                Navigator.of(context).pop();
+                                upd();
+                              },
+                            ),
+                          ],
+                        ),
+                      );
                     },
                   ),
                   IconButton(
                     icon: Icon(Icons.settings),
                     onPressed: (){
-                      print("Ediot");
+                      print("Edit");
+                      widget.cb3();
                     },
                   ),
 
