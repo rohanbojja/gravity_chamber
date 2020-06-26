@@ -74,6 +74,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  var box = Hive.box("log");
   final taskList = getIt.get<TaskList>();
   //Textcontrollers
   TextEditingController _addLabelController = TextEditingController();
@@ -117,57 +118,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _addTask() async {
-    var newTask = await showDialog<Task>(
-        context: context,
-        builder: (BuildContext context) {
-          return SimpleDialog(
-            title: _addLabelController.text.length == 0
-                ? Text("New task")
-                : Text("${_addLabelController.text}"),
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 32),
-                child: Wrap(
-                  children: [
-                    TextField(
-                      controller: _addLabelController,
-                      decoration:
-                          InputDecoration(hintText: "Label, ex: College work"),
-                    ),
-                    TextField(
-                      controller: _goalTextController,
-                      decoration: InputDecoration(hintText: "Daily goal"),
-                    )
-                  ],
-                ),
-              ),
-              ButtonBar(
-                children: [
-                  OutlineButton(
-                    child: Text("Discard"),
-                    onPressed: () => {Navigator.pop(context)},
-                  ),
-                  RaisedButton(
-                    child: Text("Add"),
-                    onPressed: () => {
-                      //globalObjects.addTask(_addLabelController.text),
-                      Navigator.pop(
-                          context,
-                          Task(
-                              name: _addLabelController.text,
-                              goal: Duration(
-                                  minutes: int.parse(_goalTextController.text)),
-                              color: randomColor()))
-                    },
-                  )
-                ],
-              )
-            ],
-          );
-        });
-    if (newTask != null) {
-      taskList.add(newTask);
-    }
+    Task t  = new Task(goal: Duration(hours: 3),color: Colors.grey);
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => new TaskPage(t)));
   }
 
   @override
@@ -315,7 +270,7 @@ class _MyHomePageState extends State<MyHomePage> {
           }),
       floatingActionButton: FloatingActionButton(
         onPressed: _addTask,
-        tooltip: 'Add a label',
+        tooltip: 'Add a task',
         child: Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );

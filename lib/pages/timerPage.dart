@@ -2,6 +2,7 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_beep/flutter_beep.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get_it/get_it.dart';
 import 'package:gravitychamber/components/TaskList.dart';
 import 'package:gravitychamber/main.dart';
@@ -16,8 +17,11 @@ class timerPage extends StatefulWidget {
 }
 
 class _timerPageState extends State<timerPage> {
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  bool notifInit =false;
   int minutes;
   Duration dur;
+  Duration disp_dur;
   Timer _timer;
   bool _isBreak = false;
   final _taskList = getIt<TaskList>();
@@ -28,9 +32,13 @@ class _timerPageState extends State<timerPage> {
     custInit();
   }
 
-  void custInit() {
+  Future<void> custInit() async {
     dur = globalObjects.setting.workDur;
+    disp_dur = dur;
     _startTimer();
+    setState(() {
+
+    });
   }
   void logData(){
     var box = Hive.box("log");
@@ -41,16 +49,58 @@ class _timerPageState extends State<timerPage> {
     });
   }
 
+  Future<void> notif(Duration dd, {String title, String body}) async {
+    if(!notifInit){
+      flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+// initialise the plugin. app_icon needs to be a added as a drawable resource to the Android head project
+      var initializationSettingsAndroid = AndroidInitializationSettings('mipmap/launcher_icon');
+      var initializationSettingsIOS = IOSInitializationSettings();
+      var initializationSettings = InitializationSettings(
+          initializationSettingsAndroid, initializationSettingsIOS);
+      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+      notifInit=true;
+    }
+    print("SCHED: $dd,$title,$body");
+    var scheduledNotificationDateTime =
+    DateTime.now().add(dd);
+    var androidPlatformChannelSpecifics =
+    AndroidNotificationDetails('your other channel id',
+        'your other channel name', 'your other channel description');
+    var iOSPlatformChannelSpecifics =
+    IOSNotificationDetails();
+    NotificationDetails platformChannelSpecifics = NotificationDetails(
+        androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.schedule(
+        0,
+        title,
+        body,
+        scheduledNotificationDateTime,
+        platformChannelSpecifics, androidAllowWhileIdle: true);
+  }
+
 
   void _startTimer() {
+    var _tS = DateTime.now();
+    if(_isBreak){
+      notif(dur, title:"Great job! You're break is up.", body:"Time to get back to work!");
+    }
+    else{
+      notif(dur, title:"Time to take a break!", body:"Chill for a bit?");
+    }
+
     //FlutterBeep.beep();
     _timer = Timer.periodic(
         Duration(seconds: 1),
         (timer) => {
               setState(() {
-                dur = dur - Duration(seconds: 1);
+                var elapsed = Duration(milliseconds: (DateTime.now().millisecondsSinceEpoch - _tS.millisecondsSinceEpoch));
+                disp_dur = dur - elapsed;
+                print(disp_dur);
+                setState(() {
+
+                });
               }),
-              if (dur.inSeconds == 0 && !_isBreak)
+              if (disp_dur.inSeconds == 0 && !_isBreak)
                 {
                   //Send a notification / ALERT
                   _timer.cancel(),
@@ -83,7 +133,7 @@ class _timerPageState extends State<timerPage> {
                       )
                     ..show()
                 }
-              else if (dur.inSeconds == 0)
+              else if (disp_dur.inSeconds == 0)
                 {
                   _timer.cancel(),
                   logData(),
@@ -156,7 +206,7 @@ class _timerPageState extends State<timerPage> {
                   Flexible(
                     flex: 15,
                     child: Text(
-                      "${dur.toString().substring(2, 7)}",
+                      "${disp_dur.toString().substring(2,7)}",
                       style: Theme.of(context).textTheme.headline1,
                     ),
                   ),

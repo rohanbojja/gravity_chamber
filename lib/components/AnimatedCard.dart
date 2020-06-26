@@ -17,7 +17,7 @@ class AnimatedCard extends StatefulWidget {
   _AnimatedCardState createState() => _AnimatedCardState();
 }
 
-class _AnimatedCardState extends State<AnimatedCard> with TickerProviderStateMixin {
+class _AnimatedCardState extends State<AnimatedCard>  {
   bool isSelected = false;
   Color pickerColor = Color(0xff443a49);
   Color currentColor = Color(0xff443a49);
@@ -57,12 +57,12 @@ class _AnimatedCardState extends State<AnimatedCard> with TickerProviderStateMix
         },
         child: Dismissible(
           child: ExpansionTileCard(
+            duration: Duration(milliseconds: 100),
             borderRadius: BorderRadius.circular(5),
             baseColor: widget.curTask.color,
             expandedColor: currentColor.withAlpha(255),
             title: Text(widget.curTask.name, style: TextStyle(color: Colors.white),),
             children: [
-              Divider(),
               LinearProgressIndicator(
                 backgroundColor: Theme.of(context).primaryColorLight,
                 value: 0.5,

@@ -79,6 +79,8 @@ class TaskList{
       _taskMap.add(taskMap);
       print("Task update ${_taskMap.value.containsKey(t.name)}");
       updateHive();
+    }else{
+      add(t);
     }
   }
 
